@@ -1,0 +1,44 @@
+name: Bug recreation
+on:
+  push:
+    branches:
+      - main
+jobs:
+  run-orm-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+      - name: Run migration
+        run: |
+          make setup
+          make migrate_up
+      - name: delete existing orm files
+        run: |
+          rm -rf ./domain ./query
+      - name: Run main.go
+        run: |
+          go run main.go
+      - name: Check Diff
+        run: |
+          git diff --exit-code
+      - name: Highlight Bug
+        run: |
+          echo "Refer query/something.gen.go..."
+          cat << 'EOF'
+          type Something struct {
+           	Column1 *int32 `gorm:"column:column1;type:INT;primaryKey" json:"column1"`
+           	Column2 *int32 `gorm:"column:column2;type:INT" json:"column2"`
+            Column3 *int32 `gorm:"column:column3;type:INT" json:"column3"`
+          }
+          should be
+          type Something struct {
+           	Column1 *int32 `gorm:"column:column1;type:INT;primaryKey" json:"column1"`
+           	Column2 *int32 `gorm:"column:column2;type:INT;primaryKey" json:"column2"`
+           	Column3 *int32 `gorm:"column:column3;type:INT" json:"column3"`
+          }
+          'EOF'
