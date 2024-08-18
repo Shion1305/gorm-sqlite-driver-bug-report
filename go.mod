@@ -1,6 +1,6 @@
 module gorm-gen-bug-recreate
 
-go 1.23rc1
+go 1.22
 
 require (
 	gorm.io/driver/sqlite v1.5.6
